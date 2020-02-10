@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 Group Members:
@@ -14,3 +16,19 @@ library(readr)
 library(mosaic)
 houses = read_csv("AmesTrain2.csv")
 ```
+
+
+## Part 1. Create an initial basic model
+*build a model using Backward elimination, Forward selection, and Stepwise selection*
+
+
+## Part 2. Residual Analysis for basic model
+
+
+## Part 3. "Fancier model"
+
+
+## Part 4. Residual Analysis for fancier model
+
+
+## Part 5. Final Model
