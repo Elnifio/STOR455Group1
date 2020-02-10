@@ -5,7 +5,7 @@ output: html_notebook
 
 Group Members:
 Andrew Shooman
-Rayna Zeng
+Xiangyu Zeng
 Thao Nguyen
 Yunzhou Liu
 
