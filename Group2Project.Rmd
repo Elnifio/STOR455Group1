@@ -23,10 +23,18 @@ head(quantitative.house)
 ```
 
 ## Part 1. Create an initial basic model
+
 *build a model using Backward elimination, Forward selection, and Stepwise selection*
+
 ##### Build a model
 ```{r}
 plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
+```
+
+```{r}
+Full = lm(quantitative.house$Price~., data=quantitative.house[c(2:26)])
+MSE=(summary(Full)$sigma)^2
+step(Full,scale=MSE, trace=FALSE)
 ```
 
 
