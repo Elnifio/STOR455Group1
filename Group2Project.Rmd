@@ -17,9 +17,17 @@ library(mosaic)
 houses = read_csv("AmesTrain2.csv")
 ```
 
+```{r}
+quantitative.house <- houses[c(2:4, 7:10, 17:19, 23:30, 32:33, 35:36, 39:42)]
+head(quantitative.house)
+```
 
 ## Part 1. Create an initial basic model
 *build a model using Backward elimination, Forward selection, and Stepwise selection*
+##### Build a model
+```{r}
+plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
+```
 
 
 ## Part 2. Residual Analysis for basic model
