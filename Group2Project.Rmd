@@ -34,7 +34,18 @@ plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
 ```{r}
 Full = lm(quantitative.house$Price~., data=quantitative.house[c(2:26)])
 MSE=(summary(Full)$sigma)^2
-step(Full,scale=MSE, trace=FALSE)
+backward.elimination = step(Full,scale=MSE, trace=FALSE)
+summary(backward.elimination)
+```
+
+```{r}
+none = lm(quantitative.house$Price~1, data=quantitative.house[2:26])
+forward.selection = step(none, scope=list(upper=Full), scale=MSE, direction="forward", trace=FALSE)
+summary(forward.selection)
+```
+
+```{r}
+
 ```
 
 
