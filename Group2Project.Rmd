@@ -17,6 +17,7 @@ library(mosaic)
 houses = read_csv("AmesTrain2.csv")
 ```
 
+Exclude all the categorical variables from this dataset.
 ```{r}
 quantitative.house <- houses[c(2:4, 7:10, 17:19, 23:30, 32:33, 35:36, 39:42)]
 head(quantitative.house)
@@ -45,8 +46,10 @@ summary(forward.selection)
 ```
 
 ```{r}
-
+stepwise.selection = step(none, scope=list(upper=Full), scale=MSE, trace=FALSE)
+summary(stepwise.selection)
 ```
+
 
 
 ## Part 2. Residual Analysis for basic model
