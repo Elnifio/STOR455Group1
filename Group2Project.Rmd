@@ -50,22 +50,26 @@ stepwise.selection = step(none, scope=list(upper=Full), scale=MSE, trace=FALSE)
 summary(stepwise.selection)
 ```
 
+```{r}
+all=regsubsets(quantitative.house$Price~.,data=quantitative.house[2:26])
+ShowSubsets(all)
+```
+
 
 
 ## Part 2. Residual Analysis for basic model
 
 *Based off model from backward selection*
 
-The residuals show a significant curved relationship in the fitted plot, indicicating that the prediction is different based off of the price of the house, violating one of the linear model conditions. Also, the normal Q-Q plot has some extreme values at the ends, further showing that the residuals are not constant throughout the model.
+The residuals show a significant curved relationship in the fitted plot, indicicating that the prediction is different based off of the price of the house, violating one of the linear model conditions. Also, the normal Q-Q plot has some extreme values at the ends, further showing that the residuals are not constant throughout the model. However, all of the points fall within Cook's distance, indicating that none of the points have leverage significant enought to drastically change the model.
 
 ```{r}
 basic.model <- houses[c(2:4, 7:10, 16:17, 23:24,30, 33, 36, 41:42)]
-basic.lm = lm(basic.model$Price~., data=basic.model[c(2:16)])
-summary(basic.lm)
-plot(basic.lm)
+summary(basic.model)
+plot(basic.model)
 ```
 
-The maximum and minimum residual values of the model also have significantly large standardized and studentized values, which indicates both have sizeable influence on the model.
+The maximum and minimum residual values of the model also have significantly large standardized and studentized values, which indicates both have the potential to have influence over the model, although both still are within Cooks Distance.
 
 ```{r}
 range(basic.lm$residuals)
