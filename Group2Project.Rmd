@@ -84,6 +84,40 @@ rstudent(basic.lm)[188]
 
 ## Part 3. "Fancier model"
 
+This model is built based on the result of RegSubsets. We have taken:
+1. The log of the LotArea
+2. The log of (2010 - YearBuilt)
+3. The log of (2011 - YearRemodel)
+
+This transformation allows us to improve our Adjusted R-squared from 0.8516 to 0.8599.
+```{r}
+old.mod.two = lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel 
+                 + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
+summary(old.mod.two)
+mod.two = lm(Price ~ log(sqrt(LotArea)) + Quality + log(2010 - YearBuilt) + log(2011 - YearRemodel) 
+                 + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
+summary(mod.two)
+```
+
+This model is built based on the result of Stepwise selection. We have taken: 
+1. log of LotArea
+2. log of (2010 - YearBuilt)
+
+This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.8715
+```{r}
+old.mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF + 
+    BasementSF + YearBuilt + BasementFinSF + GarageSF + LotArea + 
+    YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
+    Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
+summary(old.mod)
+mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF + 
+    BasementSF + log(2010 - YearBuilt) + BasementFinSF + GarageSF + log(LotArea) + 
+    YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
+    Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
+summary(mod)
+```
+ 
+
 
 ## Part 4. Residual Analysis for fancier model
 
