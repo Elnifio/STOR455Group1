@@ -63,12 +63,6 @@ stepwise.selection = step(none, scope=list(upper=Full), scale=MSE, trace=FALSE)
 summary(stepwise.selection)
 ```
 
-```{r}
-all=regsubsets(quantitative.house$Price~.,data=quantitative.house[2:26])
-ShowSubsets(all)
-```
-
-
 
 ## Part 2. Residual Analysis for basic model
 
@@ -78,6 +72,7 @@ The residuals show a significant curved relationship in the fitted plot, indicic
 
 ```{r}
 basic.model <- houses[c(2:4, 7:10, 16:17, 23:24,30, 33, 36, 41:42)]
+
 summary(basic.model)
 plot(basic.model)
 ```
@@ -101,13 +96,14 @@ This model is built based on the result of RegSubsets. We have taken:
 1. The log of the LotArea
 2. The log of (2010 - YearBuilt)
 3. The log of (2011 - YearRemodel)
+4. Sum of log(Price) and sqrt(Price)
 
-This transformation allows us to improve our Adjusted R-squared from 0.8516 to 0.8599.
+This transformation allows us to improve our Adjusted R-squared from 0.8516 to 0.8779.
 ```{r}
 old.mod.two = lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel 
                  + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
 summary(old.mod.two)
-mod.two = lm(Price ~ log(sqrt(LotArea)) + Quality + log(2010 - YearBuilt) + log(2011 - YearRemodel) 
+mod.two = lm(I(log(Price) + sqrt(Price)) ~ log(sqrt(LotArea)) + Quality + log(2010 - YearBuilt) + log(2011 - YearRemodel) 
                  + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
 summary(mod.two)
 ```
@@ -115,15 +111,16 @@ summary(mod.two)
 This model is built based on the result of Stepwise selection. We have taken: 
 1. log of LotArea
 2. log of (2010 - YearBuilt)
+3. sum of log(Price) + sqrt(Price)
 
-This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.8715
+This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.8984
 ```{r}
 old.mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF + 
     BasementSF + YearBuilt + BasementFinSF + GarageSF + LotArea + 
     YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
     Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
 summary(old.mod)
-mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF + 
+mod = lm(formula = I(log(quantitative.house$Price) + sqrt(quantitative.house$Price)) ~ Quality + GroundSF + 
     BasementSF + log(2010 - YearBuilt) + BasementFinSF + GarageSF + log(LotArea) + 
     YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
     Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
@@ -131,6 +128,8 @@ summary(mod)
 ```
 
 ## Part 4. Residual Analysis for fancier model
-
+```{r}
+plot(mod)
+```
 
 ## Part 5. Final Model
