@@ -14,6 +14,8 @@ Yunzhou Liu
 ```{r, warning=FALSE, message=FALSE}
 library(readr)
 library(mosaic)
+library(leaps)
+source("./ShowSubsets.R")
 houses = read_csv("AmesTrain2.csv")
 ```
 
@@ -28,9 +30,20 @@ head(quantitative.house)
 *build a model using Backward elimination, Forward selection, and Stepwise selection*
 
 ##### Build a model
-```{r}
+
+This allows us to plot the variables to see the relationships between different variables.
+```{r, echo=FALSE}
 plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
 ```
+
+Showing the RegSubsets tells us that the best model with 8 variables is:
+`lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)` with a Mallow's CP = 43.59
+```{r}
+all=regsubsets(quantitative.house$Price~., data=quantitative.house[2:26], nbest=2)
+ShowSubsets(all)
+```
+
+We could also check by performing backward & forward & stepwise selection.
 
 ```{r}
 Full = lm(quantitative.house$Price~., data=quantitative.house[c(2:26)])
@@ -116,8 +129,6 @@ mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF +
     Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
 summary(mod)
 ```
- 
-
 
 ## Part 4. Residual Analysis for fancier model
 
