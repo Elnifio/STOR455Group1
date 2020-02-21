@@ -141,6 +141,9 @@ plot(mod$residuals~mod$fitted.values)
 abline(a=0,b=0)
 mean(mod$residuals)
 ```
+Using the redisuals vs fits plot to check zero mean and constant variance. 
+The residuals roughly form a "horizontal band" around the 0 line. This suggests that the variances of the error terms are equal.
+No one residual "stands out" from the basic random pattern of residuals. This suggests that there are no outliers.
 
 ```{r}
 hist(mod$residuals,breaks=20)
@@ -148,7 +151,7 @@ qqnorm(mod$residuals)
 qqline(mod$residuals)
 ```
 
-
+The histogram and the Q-Q norm plot show that the data is normal distributed.
 
 
 ```{r}
