@@ -185,7 +185,8 @@ We have taken data transformations:
 1. Predictor: log of LotArea
 2. Predictor: log of (2010 - YearBuilt)
 3. Predictor: taken into account for: `Total Full Bath Count` and `Total Half Bath Count`
-4. Response: square root of Price
+4. Predictor: taken out some predictors insignificant at 10% level: `YearRemodel`, `LotFrontage`, `Bedroom` and `EnclosedPorchSF`
+5. Response: square root of Price
 
 
 This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.9001
@@ -197,8 +198,8 @@ old.mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF +
 summary(old.mod)
 mod = lm(formula = sqrt(quantitative.house$Price) ~ Quality + GroundSF + 
     BasementSF + log(2010 - YearBuilt) + BasementFinSF + GarageSF + log(LotArea) + 
-    YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
-    Bedroom + EnclosedPorchSF + I(BasementFBath + FullBath) + I(BasementHBath + HalfBath), data = quantitative.house[2:26])
+   Condition + ScreenPorchSF + Fireplaces
+   + I(BasementFBath + FullBath) + I(BasementHBath + HalfBath), data = quantitative.house[2:26])
 summary(mod)
 ```
 
