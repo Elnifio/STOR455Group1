@@ -39,21 +39,31 @@ plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
 
 ##### Build model
 
-Showing the RegSubsets tells us that the best model with 8 variables is:
-`lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)` with a Mallow's CP = 43.59
+Showing the RegSubsets tells us that the best model with 15 variables is:
+```
+lm(Price ~ 
+  LotFrontage + LotArea + Quality + Condition + YearBuilt + YearRemodel + 
+  BasementFinSF + BasementSF + FirstSF + SecondSF + Bedroom + Fireplaces + 
+  GarageSF + EnclosedPorchSF + ScreenPorchSF, data=quantitative.house[2:26])
+```
+with a Mallow's CP = 9.28
 
-From the summary of this model, we can see that its Adjusted R-squared is 0.8516, 
-with every predictors significant at 5% level as shown on the Pr(>|t|) column in the Coefficients table.
+From the summary of this model, we can see that its Adjusted R-squared is 0.8614, 
+with predictors `Bedroom`, `Fireplaces`, `EnclosedPorchSF` insignificant at 5% level.
 ```{r}
-all=regsubsets(quantitative.house$Price~., data=quantitative.house[c(2:26)], nbest=2)
+all=regsubsets(quantitative.house$Price~., data=quantitative.house[c(2:26)], nbest=2, nvmax=26)
 ShowSubsets(all)
-regsubsets.model = lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
+regsubsets.model = lm(Price ~ 
+  LotFrontage + LotArea + Quality + Condition + YearBuilt + YearRemodel + 
+  BasementFinSF + BasementSF + FirstSF + SecondSF + Bedroom + Fireplaces + 
+  GarageSF + EnclosedPorchSF + ScreenPorchSF, data=quantitative.house)
 summary(regsubsets.model)
 ```
 
 We could also create models and compare them by performing backward & forward & stepwise selection. 
 Based on all of the result below, 
-we can see that all of these three models have a higher Adjusted R-squared compared to our initial model created by the `RegSubsets` function. 
+we can see that the RegSubsets model appears to be same as Backward Selection model, 
+while Stepwise and Forward selection appears to create the same model. 
 However, we can also observe that these models each has predictors that are not significant at a 5% level:
 
 - Backward elimination model has three predictors insignificant at a 5% level: `Bedroom`, `Fireplaces`, and `EnclosedPorchSF`. 
@@ -74,11 +84,24 @@ summary(forward.selection)
 summary(stepwise.selection)
 ```
 
+##### Selection of models
+Comparing these two models, we can see that there is a predictor with VIF = 4 in regsubsets.model, 
+which indicates that this predictor might be already predicted by other variables in this model. 
+```{r}
+vif(stepwise.selection)
+"--------"
+vif(regsubsets.model)
+```
 Hence, based on the result above, we would like to choose the Stepwise Selection model 
-since it has average Adjusted R-squared and average number of insignificant predictors, compared to other two models. 
+since overall its predictors have small VIF, compared to regsubsets model. 
+
+##### Summary and VIF for this model
 
 The summary of this model shows that there is only one predictor which is not significant at 5% level: `EnclosedPorchSF`,
 which has Pr(>|t|) = 0.064829. 
+
+However, we should be aware that there are two predictors `Bedroom` and `Fireplaces` 
+which are significant at 5% level, but not at 1% level. 
 
 The VIF table below shows that every predictor has a VIF less than 5, 
 indicating that these predictors are not predicted by other predictors 
@@ -114,8 +137,7 @@ which indicates that these two points both have the **potential** to have influe
 though they still are within Cooks Distance.
 
 In fact, we can see that there are several points with large standardized and studentized residuals.
-We can identify and remove all of them [62, 70, 198, 202, 374, 535, 537, 572, 581].
-
+We can identify and remove them.
 ```{r}
 range(stepwise.selection$residuals)
 max.resid = which.max(stepwise.selection$residuals)
@@ -126,15 +148,12 @@ rstandard(stepwise.selection)[max.resid]
 rstudent(stepwise.selection)[max.resid]
 rstandard(stepwise.selection)[min.resid]
 rstudent(stepwise.selection)[min.resid]
-rsd = rstandard(stepwise.selection)
-rstd = rstudent(stepwise.selection)
-rsd[abs(rsd) > 3]
-rstd[abs(rstd) > 3]
 ```
 
 We can see that the Q-Q plot approaches the normal Q-Q Plot after subsetting. 
+And the re-trained model has a higher Adjusted R-squared, 0.8738, compared to the original 0.8611.
 ```{r}
-sub.house = quantitative.house[c(1:61, 62:69, 71:187, 189:197, 199:201, 203, 205:373, 375:534, 536, 538:571, 573:580, 582:600),]
+sub.house = quantitative.house[c(1:187, 189:197, 199:600),]
 reduced.mod = lm(formula = sub.house$Price ~ Quality + GroundSF + 
     BasementSF + YearBuilt + BasementFinSF + GarageSF + LotArea + 
     YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
@@ -159,21 +178,24 @@ We can also analyze the leverages of this model by applying the `hatvalues()` fu
 ## Part 3. "Fancier model"
 
 We then build another model based on the result of Stepwise selection. 
+
+
+
 We have taken data transformations: 
 1. Predictor: log of LotArea
 2. Predictor: log of (2010 - YearBuilt)
 3. Predictor: taken into account for: `Total Full Bath Count` and `Total Half Bath Count`
-4. Response: sum of log(Price) + sqrt(Price)
+4. Response: square root of Price
 
 
-This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.8995
+This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.9001
 ```{r}
 old.mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF + 
     BasementSF + YearBuilt + BasementFinSF + GarageSF + LotArea + 
     YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
     Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
 summary(old.mod)
-mod = lm(formula = I(log(quantitative.house$Price) + sqrt(quantitative.house$Price)) ~ Quality + GroundSF + 
+mod = lm(formula = sqrt(quantitative.house$Price) ~ Quality + GroundSF + 
     BasementSF + log(2010 - YearBuilt) + BasementFinSF + GarageSF + log(LotArea) + 
     YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
     Bedroom + EnclosedPorchSF + I(BasementFBath + FullBath) + I(BasementHBath + HalfBath), data = quantitative.house[2:26])
