@@ -162,24 +162,9 @@ summary(reduced.mod)
 plot(reduced.mod, c(1, 2, 5))
 ```
 
-- - -
-##### UNFINISHED TODO: hatvalues analysis
-We can also analyze the leverages of this model by applying the `hatvalues()` function:
-```{r}
-# model.hatvalues = hatvalues(stepwise.selection)
-# avg.leverage = 2 / length(model.hatvalues)
-# double.leverage = 2 * avg.leverage
-# triple.leverage = 3 * avg.leverage
-# model.hatvalues[model.hatvalues >= triple.leverage]
-```
-- - -
-
-
 ## Part 3. "Fancier model"
 
 We then build another model based on the result of Stepwise selection. 
-
-
 
 We have taken data transformations: 
 1. Predictor: log of LotArea
@@ -205,21 +190,27 @@ summary(mod)
 
 ## Part 4. Residual Analysis for fancier model
 
+After transformation, the Adjusted R-square value became larger from 0.8611 to 0.8996.
 
+We can use the redisuals vs fits plot to check zero mean and constant variance. 
 
-```{r}
-plot(mod, 5)
-```
-
+We can see that the residuals of the model have constant variance instead of specific shape, and the mean of them is around 0 since they are along with the line more or less. This suggests that the variances of the error terms are equal. 
+No one residual "stands out" from the basic random pattern of residuals. This suggests that there are no outliers.
 
 ```{r}
 plot(mod$residuals~mod$fitted.values)
 abline(a=0,b=0)
 mean(mod$residuals)
 ```
-Using the redisuals vs fits plot to check zero mean and constant variance. 
-The residuals roughly form a "horizontal band" around the 0 line. This suggests that the variances of the error terms are equal.
-No one residual "stands out" from the basic random pattern of residuals. This suggests that there are no outliers.
+
+
+
+The histogram shows a roughly bell curve shape, and the Q-Q norm plot show that the data is normal distributed. 
+After transformation, the Adjusted R-square value became larger 0.8996.
+
+Also, while the normal Q-Q plot has some extreme values at the left ends, 
+the right tail of this Q-Q Plot shows little extreme values,
+indicating that the residuals for our new model is more normally distributed compared to the previous model. 
 
 ```{r}
 hist(mod$residuals,breaks=20)
@@ -227,25 +218,56 @@ qqnorm(mod$residuals)
 qqline(mod$residuals)
 ```
 
-The histogram and the Q-Q norm plot show that the data is normal distributed.
 
 
+We can further look at the Cook's Distance plot and see that, 
+different from our previous Cook's Distance plot, our new plot shows more centered distribution, 
+with no observations having high leverage. 
+For instance, our initial model has two points located far away from cluster of data, which are labeled 438 and 102. 
+However, on the plot below, we can see that they are no longer far away from our cluster of data. 
+
+All of these means that the new model is better than before and our new model doesn’t need additional transformation.
+
+```{r}
+plot(mod, 5)
+```
+
+The standardized and studentized residual did not vary too much.
 ```{r}
 range(mod$residuals)
 which.max(mod$residuals)
 which.min(mod$residuals)
-rstandard(mod)[198]
-rstudent(mod)[198]
+rstandard(mod)[572]
+rstudent(mod)[572]
 rstandard(mod)[188]
 rstudent(mod)[188]
 ```
 
+
+
 ## Part 5. Final Model
 
-```{r}
-house=data.frame(Quality=7, BasementSF=1150,  YearBuilt=1995,  GarageSF=502, LotArea=11060, YearRemodel=2003, Condition=5, LotFrontage=90, Fireplaces=1, Bedroom=3, GroundSF=2314, BasementFinSF=0, EnclosedPorchSF=0, ScreenPorchSF=0)
-
-predict.lm(mod,house,interval="prediction",level=.95)
+The final model is:
+```
+sqrt(Price) = 
+  Quality + GroundSF + BasementSF + log(2010 - YearBuilt) + BasementFinSF + 
+  GarageSF + log(LotArea) + Condition + ScreenPorchSF + Fireplaces + 
+  I(BasementFBath + FullBath) + I(BasementHBath + HalfBath)
 ```
 
-We are 95% confident that the price of the house with the description in the question is fall into the interval [188.1038, 292.0419]
+And we can predict the price of a new house based on our model. 
+
+The predicted value of the price of the house for the given description is 228.2079 thoudsand dollars.
+We are 95% confident that the price of the house with the description in the question is fall into the interval [181.6355, 280.0897]. Therefore, we are 95% confident to say that the predicted price in this model is between 181.6355  and 280.0897 (in 1,000’s of dollars).
+
+```{r}
+house=data.frame(Quality=7, BasementSF=1150,  YearBuilt=1995,  GarageSF=502, LotArea=11060, YearRemodel=2003, Condition=5, LotFrontage=90, Fireplaces=1, Bedroom=3, GroundSF=2314, BasementFinSF=0, EnclosedPorchSF=0, ScreenPorchSF=0, BasementHBath=0, BasementFBath=0, FullBath=2, HalfBath=1)
+
+# Since we have taken the square root of Price, 
+# The prediction result is sqrt(Price), 
+# and we need to square it to reveal the actual price.
+
+(predict.lm(mod,house,interval="prediction",level=.95))^2
+```
+
+
