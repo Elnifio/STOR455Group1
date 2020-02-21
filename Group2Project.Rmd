@@ -114,7 +114,7 @@ vif(stepwise.selection)
 
 ## Part 2. Residual Analysis for basic model
 
-*Based off model from backward selection*
+*Based off model from stepwise selection*
 
 The Residuals vs Fitted plot show a significant curved relationship in the fitted plot, 
 indicicating that the prediction is different based off of the price of the house, 
