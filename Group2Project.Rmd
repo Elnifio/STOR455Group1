@@ -15,52 +15,77 @@ Yunzhou Liu
 library(readr)
 library(mosaic)
 library(leaps)
+library(car)
 source("./ShowSubsets.R")
 houses = read_csv("AmesTrain2.csv")
 ```
 
 Exclude all the categorical variables from this dataset.
+
 ```{r}
 quantitative.house <- houses[c(2:4, 7:10, 17:19, 23:30, 32:33, 35:36, 39:42)]
 head(quantitative.house)
+```
+
+These following codes allow us to plot the variables to see the relationships between different variables.
+
+```{r, echo=FALSE}
+plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
 ```
 
 ## Part 1. Create an initial basic model
 
 *build a model using Backward elimination, Forward selection, and Stepwise selection*
 
-##### Build a model
-
-This allows us to plot the variables to see the relationships between different variables.
-```{r, echo=FALSE}
-plot(quantitative.house$Price~., data=quantitative.house[c(2:26)])
-```
+##### Build model
 
 Showing the RegSubsets tells us that the best model with 8 variables is:
 `lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)` with a Mallow's CP = 43.59
+
+From the summary of this model, we can see that its Adjusted R-squared is 0.8516, 
+with every predictors significant at 5% level as shown on the Pr(>|t|) column in the Coefficients table.
 ```{r}
-all=regsubsets(quantitative.house$Price~., data=quantitative.house[2:26], nbest=2)
+all=regsubsets(quantitative.house$Price~., data=quantitative.house[c(2:26)], nbest=2)
 ShowSubsets(all)
+regsubsets.model = lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
+summary(regsubsets.model)
 ```
 
-We could also check by performing backward & forward & stepwise selection.
+We could also create models and compare them by performing backward & forward & stepwise selection. 
+Based on all of the result below, 
+we can see that all of these three models have a higher Adjusted R-squared compared to our initial model created by the `RegSubsets` function. 
+However, we can also observe that these models each has predictors that are not significant at a 5% level:
 
+- Backward elimination model has three predictors insignificant at a 5% level: `Bedroom`, `Fireplaces`, and `EnclosedPorchSF`. 
+- Forward Selection model has one predictor insignificant at a 5% level: `EnclosedPorchSF`. However, we should notice that `Bedroom` and `Fireplaces` are significant at 5%, but not 1%. 
+- Stepwise selection appears to be the same as Forward Selection. 
 ```{r}
+# Performs a Backward Elimination
 Full = lm(quantitative.house$Price~., data=quantitative.house[c(2:26)])
 MSE=(summary(Full)$sigma)^2
 backward.elimination = step(Full,scale=MSE, trace=FALSE)
-summary(backward.elimination)
-```
-
-```{r}
+# Performs a Forward Selection
 none = lm(quantitative.house$Price~1, data=quantitative.house[2:26])
 forward.selection = step(none, scope=list(upper=Full), scale=MSE, direction="forward", trace=FALSE)
+# Performs a Stepwise Selection
+stepwise.selection = step(none, scope=list(upper=Full), scale=MSE, trace=FALSE)
+summary(backward.elimination)
 summary(forward.selection)
+summary(stepwise.selection)
 ```
 
+Hence, based on the result above, we would like to choose the Stepwise Selection model 
+since it has average Adjusted R-squared and average number of insignificant predictors, compared to other two models. 
+
+The summary of this model shows that there is only one predictor which is not significant at 5% level: `EnclosedPorchSF`,
+which has Pr(>|t|) = 0.064829. 
+
+The VIF table below shows that every predictor has a VIF less than 5, 
+indicating that these predictors are not predicted by other predictors 
+and they appear to have little collinearity issue. 
 ```{r}
-stepwise.selection = step(none, scope=list(upper=Full), scale=MSE, trace=FALSE)
 summary(stepwise.selection)
+vif(stepwise.selection)
 ```
 
 
@@ -68,52 +93,80 @@ summary(stepwise.selection)
 
 *Based off model from backward selection*
 
-The residuals show a significant curved relationship in the fitted plot, indicicating that the prediction is different based off of the price of the house, violating one of the linear model conditions. Also, the normal Q-Q plot has some extreme values at the ends, further showing that the residuals are not constant throughout the model. However, all of the points fall within Cook's distance, indicating that none of the points have leverage significant enought to drastically change the model.
+The Residuals vs Fitted plot show a significant curved relationship in the fitted plot, 
+indicicating that the prediction is different based off of the price of the house, 
+violating one of the linear model conditions (Zero-Mean). 
+
+Also, the normal Q-Q plot has some extreme values at the ends, 
+further showing that the residuals are not constant throughout the model,
+violating the Independence condition. 
+
+However, all of the points fall within Cook's distance, as we can see from the Cook's Distance plot
+indicating that none of the points have leverage significant enought to drastically change the model.
 
 ```{r}
-basic.model <- houses[c(2:4, 7:10, 16:17, 23:24,30, 33, 36, 41:42)]
-
-summary(basic.model)
-plot(basic.model)
+# summary(stepwise.selection)
+plot(stepwise.selection, c(1, 2, 5))
 ```
 
-The maximum and minimum residual values of the model also have significantly large standardized and studentized values, which indicates both have the potential to have influence over the model, although both still are within Cooks Distance.
+The maximum and minimum residual values of the model also have significantly large standardized and studentized values,
+which indicates that these two points both have the **potential** to have influence over the model,
+though they still are within Cooks Distance.
+
+In fact, we can see that there are several points with large standardized and studentized residuals.
+We can identify and remove all of them [62, 70, 198, 202, 374, 535, 537, 572, 581].
 
 ```{r}
-range(basic.lm$residuals)
-which.max(basic.lm$residuals)
-which.min(basic.lm$residuals)
-rstandard(basic.lm)[198]
-rstudent(basic.lm)[198]
-rstandard(basic.lm)[188]
-rstudent(basic.lm)[188]
+range(stepwise.selection$residuals)
+max.resid = which.max(stepwise.selection$residuals)
+min.resid = which.min(stepwise.selection$residuals)
+max.resid
+min.resid
+rstandard(stepwise.selection)[max.resid]
+rstudent(stepwise.selection)[max.resid]
+rstandard(stepwise.selection)[min.resid]
+rstudent(stepwise.selection)[min.resid]
+rsd = rstandard(stepwise.selection)
+rstd = rstudent(stepwise.selection)
+rsd[abs(rsd) > 3]
+rstd[abs(rstd) > 3]
 ```
+
+We can see that the Q-Q plot approaches the normal Q-Q Plot after subsetting. 
+```{r}
+sub.house = quantitative.house[c(1:61, 62:69, 71:187, 189:197, 199:201, 203, 205:373, 375:534, 536, 538:571, 573:580, 582:600),]
+reduced.mod = lm(formula = sub.house$Price ~ Quality + GroundSF + 
+    BasementSF + YearBuilt + BasementFinSF + GarageSF + LotArea + 
+    YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
+    Bedroom + EnclosedPorchSF, data = sub.house[2:26])
+summary(reduced.mod)
+plot(reduced.mod, c(1, 2, 5))
+```
+
+- - -
+##### UNFINISHED TODO: hatvalues analysis
+We can also analyze the leverages of this model by applying the `hatvalues()` function:
+```{r}
+# model.hatvalues = hatvalues(stepwise.selection)
+# avg.leverage = 2 / length(model.hatvalues)
+# double.leverage = 2 * avg.leverage
+# triple.leverage = 3 * avg.leverage
+# model.hatvalues[model.hatvalues >= triple.leverage]
+```
+- - -
 
 
 ## Part 3. "Fancier model"
 
-This model is built based on the result of RegSubsets. We have taken:
-1. The log of the LotArea
-2. The log of (2010 - YearBuilt)
-3. The log of (2011 - YearRemodel)
-4. Sum of log(Price) and sqrt(Price)
+We then build another model based on the result of Stepwise selection. 
+We have taken data transformations: 
+1. Predictor: log of LotArea
+2. Predictor: log of (2010 - YearBuilt)
+3. Predictor: taken into account for: `Total Full Bath Count` and `Total Half Bath Count`
+4. Response: sum of log(Price) + sqrt(Price)
 
-This transformation allows us to improve our Adjusted R-squared from 0.8516 to 0.8779.
-```{r}
-old.mod.two = lm(Price ~ LotArea + Quality + YearBuilt + YearRemodel 
-                 + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
-summary(old.mod.two)
-mod.two = lm(I(log(Price) + sqrt(Price)) ~ log(sqrt(LotArea)) + Quality + log(2010 - YearBuilt) + log(2011 - YearRemodel) 
-                 + BasementFinSF + BasementSF + GroundSF + GarageSF, data=quantitative.house)
-summary(mod.two)
-```
 
-This model is built based on the result of Stepwise selection. We have taken: 
-1. log of LotArea
-2. log of (2010 - YearBuilt)
-3. sum of log(Price) + sqrt(Price)
-
-This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.8984
+This transformation allows us to improve our Adjusted R-squared from 0.8611 to 0.8995
 ```{r}
 old.mod = lm(formula = quantitative.house$Price ~ Quality + GroundSF + 
     BasementSF + YearBuilt + BasementFinSF + GarageSF + LotArea + 
@@ -123,7 +176,7 @@ summary(old.mod)
 mod = lm(formula = I(log(quantitative.house$Price) + sqrt(quantitative.house$Price)) ~ Quality + GroundSF + 
     BasementSF + log(2010 - YearBuilt) + BasementFinSF + GarageSF + log(LotArea) + 
     YearRemodel + Condition + ScreenPorchSF + LotFrontage + Fireplaces + 
-    Bedroom + EnclosedPorchSF, data = quantitative.house[2:26])
+    Bedroom + EnclosedPorchSF + I(BasementFBath + FullBath) + I(BasementHBath + HalfBath), data = quantitative.house[2:26])
 summary(mod)
 ```
 
